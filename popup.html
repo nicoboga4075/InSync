@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>InSync</title>
+    <link rel="icon" type="image/png" href="icon.png">
+	<link rel="stylesheet" href="popup.css">
+  </head>
+  <body>
+    <div id="titlebar">
+      <div id="titlebar-left">
+        <div id="titlebar-icon"></div>
+        <span id="titlebar-title">InSync</span>
+      </div>
+      <div id="titlebar-controls">
+        <button id="closeBtn" class="wbtn close">✕</button>
+      </div>
+    </div>
+    <div id="shell">
+      <div id="app-header">
+		Auteur : <span class="hl">Nicolas BOGALHEIRO</span> &nbsp;·&nbsp;
+        Répertoire : <span class="hl">C:\InSync</span> &nbsp;·&nbsp;
+		Version : <span class="hl">1.0.0</span> <span class="hi">✓</span> &nbsp;·&nbsp;
+		Release : <span class="hl">19/04/2026</span>
+      </div>
+      <button class="action-btn full" id="scanBtn">
+        <span class="btn-icon">🔍</span>
+        <span class="btn-frame">
+          <span class="btn-label">Scan</span>
+          <span class="btn-sub">Analyser le profil</span>
+        </span>
+      </button>
+      <div id="output-wrap">
+        <div id="output-header">
+          <div id="output-header-left">
+            <span class="dot dot-r"></span>
+            <span class="dot dot-y"></span>
+            <span class="dot dot-g"></span>
+            <span>TERMINAL</span>
+          </div>
+          <span>Node · Chrome</span>
+        </div>
+        <textarea id="outputTerminal" readonly></textarea>
+      </div>
+      <div id="statusTerminal"></div>
+      <div id="progressContainer">
+        <div id="progressHeader">
+          <span id="progressLabel"></span>
+          <span id="progressPercent">0%</span>
+        </div>
+        <div id="progressTrack">
+          <div id="progressBar"></div>
+        </div>
+        <div id="progressMeta"></div>
+      </div>
+    </div>
+    <script src="popup.js"></script>
+  </body>
+</html>

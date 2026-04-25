@@ -1,0 +1,9 @@
+{
+  "name": "com.insync.linkedin",
+  "description": "Scrap LinkedIn profile",
+  "path": "C:\\InSync\\host.cmd",
+  "type": "stdio",
+  "allowed_origins": [
+    "chrome-extension://aemdjjoefpchjblgcnfpfaaanaebkmpn/"
+  ]
+}

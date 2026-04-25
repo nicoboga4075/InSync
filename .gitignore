@@ -1,0 +1,16 @@
+node_modules
+extension.crx
+extension.pem
+*.log
+*.bak
+*.old
+Thumbs.db
+.DS_Store
+*.zip
+*.rar
+*.7z
+*.tmp
+*.temp
+*.mp3
+*.mp4
+*.docx
