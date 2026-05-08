@@ -9,7 +9,11 @@
     "cors": "^2.8.5",
     "dotenv": "^16.0.3"
   },
+    "devDependencies": {
+    "terser": "^5.39.0"
+  },
   "scripts": {
-    "test": "echo \"No tests defined\""
+    "test": "echo \"No tests defined\"",
+	"build": "terser background.js -o dist/background.js -c -m && terser popup.js -o dist/popup.js -c -m"
   }
 }
