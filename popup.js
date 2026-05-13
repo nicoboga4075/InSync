@@ -218,21 +218,20 @@ async function runScraper() {
                 });
             },
             args: [tab.url]
-        }, (results) => {
+        }, ([{ result: results }]) => {
             scanBtn.disabled = false;
             if (chrome.runtime.lastError) {
                 outputTerminal.value = "> " + cleanMessage(chrome.runtime.lastError.message) + "\n";
                 statusTerminal.textContent = `Status: Error`;
                 return;
             }
-            if (!results || !results[0]) {
+            if (!results?.length) {
                 outputTerminal.value = "> Unexpected error occured while analysing.\n";
                 statusTerminal.textContent = `Status: Error`;
                 return;
             }
-            const data = results[0].result;
-            window.scraperResults = data;
-            outputTerminal.value = JSON.stringify(data, null, 2);
+            window.scraperResults = results;
+            outputTerminal.value = JSON.stringify(window.scraperResults, null, 2);
             statusTerminal.textContent = `Status: Analysis finished`;
         });
     } catch (err) {
