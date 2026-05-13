@@ -1,3 +1,5 @@
+let analysisHadError = false;
+
 const bgPort = chrome.runtime.connect({
     name: "popup"
 });
@@ -14,8 +16,9 @@ bgPort.onMessage.addListener((msg) => {
             statusTerminal.textContent = `Status: Error`;
             hideProgress();
         } else {
-            // statusTerminal.textContent = progressPercent.textContent === "100%" ? `Status: Success` : `Status: Error`;
+            statusTerminal.textContent = analysisHadError ? `Status: Error` : `Status: Success`;
         }
+		analysisHadError = false;
         scanBtn.disabled = false;
         return;
     }
@@ -221,11 +224,13 @@ async function runScraper() {
         }, ([{ result: results }]) => {
             scanBtn.disabled = false;
             if (chrome.runtime.lastError) {
+                analysisHadError = true;
                 outputTerminal.value = "> " + cleanMessage(chrome.runtime.lastError.message) + "\n";
                 statusTerminal.textContent = `Status: Error`;
                 return;
             }
             if (!results?.length) {
+                analysisHadError = true;
                 outputTerminal.value = "> Unexpected error occured while analysing.\n";
                 statusTerminal.textContent = `Status: Error`;
                 return;
