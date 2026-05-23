@@ -4,6 +4,10 @@ const bgPort = chrome.runtime.connect({
     name: "popup"
 });
 
+function cleanMessage(message) {
+    return (message || "Unknown error occured").normalize("NFKD").replace(/[\u0000-\u001F\u007F-\u009F]/g, "");
+}
+
 bgPort.onMessage.addListener((msg) => {
     if (msg.message === "HANDCHECK_OK") {
         outputTerminal.value = "> Waiting for you.\n";
@@ -99,6 +103,8 @@ async function runScraper() {
             args: [tab.url],
             func: (tabUrl) => {
                 return new Promise((resolve, reject) => {
+					const cleanMessage = (message) => (message || "...").normalize("NFKD").replace(/[\u0000-\u001F\u007F-\u009F]/g, "");
+					
                     try {			
                         const main = document.querySelector("main");
                         main.scrollTo({ top: 0 });
@@ -139,35 +145,22 @@ async function runScraper() {
                         };
 
                         const getAnalysisZone = () =>
-                            document.querySelector('div[role="main"][data-sdui-screen="com.linkedin.sdui.flagshipnav.profile.Profile"]');
+                            document.querySelector('[data-sdui-screen="com.linkedin.sdui.flagshipnav.profile.Profile"]');
 
                         const getMain = () =>
-                            getAnalysisZone().querySelector("main#workspace");
+                            getAnalysisZone()?.querySelector("main#workspace");
 
                         const getToolBar = () =>
-                            getAnalysisZone().querySelector('div[role="toolbar"]');
+                            getAnalysisZone()?.querySelector('div[role="toolbar"]');
 
                         const getTopCard = () =>
-                            getMain().querySelector('section[componentkey$="Topcard"]');
-
-                        const getBackgroundImageZone = () =>
-                            getTopCard().querySelector('a[href*="background"],[data-original-url*="background"]');
-
-                        const getProfileImageZone = () =>
-                            getTopCard().querySelector('a[href]:not([href*="background"]),[data-original-url]:not([data-original-url*="background"])');
-
-                        const hasProfileImage = () =>
-                            getProfileImageZone().querySelector('img') !== null &&
-                            getToolBar().querySelector('img') !== null;
-
-                        const hasCoverImage = () =>
-                            getBackgroundImageZone().querySelector('img') !== null;
+                            getMain()?.querySelector('section[componentkey$="Topcard"]');
 
                         const hasVerifiedProfile = () =>
-                            getTopCard().querySelector('svg[id*="verified"]') !== null;
+                            getTopCard()?.querySelector('svg[id*="verified"]') !== null;
 
                         const getTitleDescription = () =>
-                            getToolBar().querySelectorAll("p")?.[1]?.textContent || "";
+                            getToolBar()?.querySelectorAll("p")?.[1]?.textContent || "";
 
                         const getName = () => {
                             const values = [
@@ -204,8 +197,6 @@ async function runScraper() {
 										url: tabUrl,
 										name: getName(),
 										titleDescription: getTitleDescription(),
-										hasProfileImage: hasProfileImage(),
-										hasCoverImage: hasCoverImage(),
 										verified: hasVerifiedProfile()
 									});	
 									sendProgress("Completed", 100);									
@@ -219,9 +210,8 @@ async function runScraper() {
                         reject(err);
                     }
                 });
-            },
-            args: [tab.url]
-        }, ([{ result: results }]) => {
+            }
+        }, ([{ result: result }]) => {
             scanBtn.disabled = false;
             if (chrome.runtime.lastError) {
                 analysisHadError = true;
@@ -229,13 +219,13 @@ async function runScraper() {
                 statusTerminal.textContent = `Status: Error`;
                 return;
             }
-            if (!results?.length) {
+            if (!result) {
                 analysisHadError = true;
                 outputTerminal.value = "> Unexpected error occured while analysing.\n";
                 statusTerminal.textContent = `Status: Error`;
                 return;
             }
-            window.scraperResults = results;
+            window.scraperResults = result;
             outputTerminal.value = JSON.stringify(window.scraperResults, null, 2);
             statusTerminal.textContent = `Status: Analysis finished`;
         });
