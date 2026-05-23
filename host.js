@@ -1,6 +1,6 @@
-const https = require("https");
-const fs = require("fs");
-const path = require("path");
+const https = require("node:https");
+const fs = require("node:fs");
+const path = require("node:path");
 const logFile = "C:\\InSync\\host.log";
 const tools = {};
 
@@ -29,15 +29,15 @@ function cleanMessage(message) {
 
 log("Host started");
 
-const { execSync, execFile } = require("child_process");
-if (!require("fs").existsSync("node_modules")) {
+const { execSync, execFile } = require("node:child_process");
+if (!require("node:fs").existsSync("node_modules")) {
     log("Installing dependencies...");
     execSync("npm install --no-audit --no-fund", {
         stdio: "ignore"
     });
 }
-const unzipper = require("unzipper");
-const util = require("util");
+const unzipper = require("node:unzipper");
+const util = require("node:util");
 const execAsync = util.promisify(execFile);
 
 function sendResponse(obj) {
