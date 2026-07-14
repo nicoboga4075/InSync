@@ -4,7 +4,7 @@
   "author": "Nicolas BOGALHEIRO",
   "license": "ISC",
   "dependencies": {
-    "unzipper": "^0.12.3",
+    "unzipper": "^0.12.5",
 	"express": "^4.18.2",
     "cors": "^2.8.5",
     "dotenv": "^17.4.2"
