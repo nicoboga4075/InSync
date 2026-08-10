@@ -1,7 +1,7 @@
 const https = require("node:https");
 const fs = require("node:fs");
 const path = require("node:path");
-const logFile = String.raw`C:\InSync\host.log`;
+const logFile = path.join(__dirname, "host.log");
 const tools = {};
 
 function log(msg) {
@@ -206,9 +206,9 @@ function installAllTools() {
                     installIfNotExists(toolsList[index++], (err) => {
                         if (err) {
                             reject(err);
-                        } else {
-                            next();
+                            return;
                         }
+                        next();
                     });
                 } catch (err) {
                     reject(err);
@@ -240,7 +240,7 @@ function formatBytes(bytes) {
 }
 
 let buffer = Buffer.alloc(0);
-process.stdin.on("data", async (chunk) => {
+async function handleStdinData(chunk) {
     buffer = Buffer.concat([buffer, chunk]);
     while (buffer.length >= 4) {
         const msgLength = buffer.readUInt32LE(0);
@@ -257,14 +257,37 @@ process.stdin.on("data", async (chunk) => {
                     type: "NATIVE_DISCONNECT",
                     error: null
                 });
-            } else {
-                log("Unknown command received");
-                sendResponse({
-                    message: "Unknown command"
-                });
+                continue;
             }
+            log("Unknown command received");
+            sendResponse({
+                message: "Unknown command"
+            });
         } catch (err) {
             log("JSON parse error: " + cleanMessage(err.message));
         }
     }
-});
+}
+
+// Only wire up real stdio when run directly as the native messaging host,
+// so this module can be safely `require()`-d from tests without consuming stdin.
+if (require.main === module) {
+    process.stdin.on("data", handleStdinData);
+}
+
+module.exports = {
+    tools,
+    log,
+    cleanMessage,
+    sendResponse,
+    fetchFollowingRedirects,
+    saveResponseToFile,
+    extractZipEntry,
+    extractFromZip,
+    download,
+    installIfNotExists,
+    installAllTools,
+    formatTime,
+    formatBytes,
+    handleStdinData
+};

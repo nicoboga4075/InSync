@@ -1,67 +1,8 @@
 let analysisHadError = false;
 
-const bgPort = chrome.runtime.connect({
-    name: "popup"
-});
-
 function cleanMessage(message) {
     return (message || "Unknown error occured").normalize("NFKD").replace(/[\u0000-\u001F\u007F-\u009F]/g, "");
 }
-
-bgPort.onMessage.addListener((msg) => {
-    if (msg.message === "HANDCHECK_OK") {
-        outputTerminal.value = "> Waiting for you.\n";
-        statusTerminal.textContent = `Status: Idle`;
-        return;
-    }
-    if (msg.type === "NATIVE_DISCONNECT") {
-        if (msg.error) {
-            outputTerminal.value += "> " + cleanMessage(msg.error) + "\n";
-            statusTerminal.textContent = `Status: Error`;
-            hideProgress();
-        } else {
-            statusTerminal.textContent = analysisHadError ? `Status: Error` : `Status: Success`;
-        }
-		analysisHadError = false;
-        scanBtn.disabled = false;
-        return;
-    }
-    if (msg.message === "ALL_TOOLS_INSTALLED") {
-        statusTerminal.textContent = `Status: Tools installation finished`;
-        let lines = outputTerminal.value.split("\n");
-        lines.shift();
-        outputTerminal.value = lines.join("\n");
-        outputTerminal.value += "\n";
-        return;
-    }
-    if (msg.message) {
-        outputTerminal.value += "> " + cleanMessage(msg.message) + "\n";
-        outputTerminal.scrollTop = outputTerminal.scrollHeight;
-    }
-});
-
-bgPort.onDisconnect.addListener(() => {
-    if (chrome.runtime.lastError) {
-        outputTerminal.value += "> " + cleanMessage (chrome.runtime.lastError.message) + "\n";
-        statusTerminal.textContent = `Status: Error`;
-        fetch(chrome.runtime.getURL("host.log"))
-            .then(res => res.text())
-            .then(text => {
-                const lines = text.trim().split("\n");
-                const lastRecord = lines.at(-1);
-                if (lastRecord.toLowerCase().includes('node') || lastRecord.includes('fichier de commandes.') || lastRecord.includes('batch file.')) {
-                    outputTerminal.value += "> Check if Node.js is installed and well recognized or used on your laptop.\n";
-                }
-            });
-    } else {
-        statusTerminal.textContent = `Status: Idle`;
-    }
-    scanBtn.disabled = false;
-});
-
-bgPort.postMessage({
-    command: "handcheck"
-});
 
 function showProgress(label, percent, meta) {
     progressContainer.style.display = "block";
@@ -104,8 +45,8 @@ async function runScraper() {
             func: (tabUrl) => {
                 return new Promise((resolve, reject) => {
 					const cleanMessage = (message) => (message || "...").normalize("NFKD").replace(/[\u0000-\u001F\u007F-\u009F]/g, "");
-					
-                    try {			
+
+                    try {
                         const main = document.querySelector("main");
                         main.scrollTo({ top: 0 });
 
@@ -113,7 +54,7 @@ async function runScraper() {
                         let idleRounds = 0;
                         const checkInterval = 500;
                         const maxIdleRounds = 10;
-						
+
 						const sendProgress = (label, percent, meta) => {
 							chrome.runtime.sendMessage({
 								type: "SCRAPER_PROGRESS",
@@ -122,9 +63,9 @@ async function runScraper() {
 								meta
 							});
 						};
-						
+
 						sendProgress("Brainstorming...", 0);
-						
+
                         const mostFrequent = (values) => {
                             const freq = new Map();
                             let best = "";
@@ -192,15 +133,15 @@ async function runScraper() {
 								if (idleRounds < maxIdleRounds) {
 									sendProgress("", Number.parseInt(idleRounds*100/maxIdleRounds));
 									setTimeout(step, checkInterval);
-								} else {
-									resolve({
-										url: tabUrl,
-										name: getName(),
-										titleDescription: getTitleDescription(),
-										verified: hasVerifiedProfile()
-									});	
-									sendProgress("Completed", 100);									
+									return;
 								}
+								resolve({
+									url: tabUrl,
+									name: getName(),
+									titleDescription: getTitleDescription(),
+									verified: hasVerifiedProfile()
+								});
+								sendProgress("Completed", 100);
 							} catch (err) {
 								reject(cleanMessage(err.message));
 							}
@@ -236,6 +177,81 @@ async function runScraper() {
     }
 }
 
-closeBtn.addEventListener("click", () => {window.close()});
+// Guarded so this file can also be `require()`-d from Node tests, where
+// `chrome` and the popup's DOM elements don't exist. In the real extension,
+// this code always runs inside popup.html where both are available.
+let bgPort;
+if (typeof chrome !== "undefined" && chrome.runtime) {
+    bgPort = chrome.runtime.connect({
+        name: "popup"
+    });
 
-scanBtn.addEventListener("click", () => {runScraper()});
+    bgPort.onMessage.addListener((msg) => {
+        if (msg.message === "HANDCHECK_OK") {
+            outputTerminal.value = "> Waiting for you.\n";
+            statusTerminal.textContent = `Status: Idle`;
+            return;
+        }
+        if (msg.type === "NATIVE_DISCONNECT") {
+            if (msg.error) {
+                outputTerminal.value += "> " + cleanMessage(msg.error) + "\n";
+                statusTerminal.textContent = `Status: Error`;
+                hideProgress();
+            } else {
+                statusTerminal.textContent = analysisHadError ? `Status: Error` : `Status: Success`;
+            }
+			analysisHadError = false;
+            scanBtn.disabled = false;
+            return;
+        }
+        if (msg.message === "ALL_TOOLS_INSTALLED") {
+            statusTerminal.textContent = `Status: Tools installation finished`;
+            let lines = outputTerminal.value.split("\n");
+            lines.shift();
+            outputTerminal.value = lines.join("\n");
+            outputTerminal.value += "\n";
+            return;
+        }
+        if (msg.message) {
+            outputTerminal.value += "> " + cleanMessage(msg.message) + "\n";
+            outputTerminal.scrollTop = outputTerminal.scrollHeight;
+        }
+    });
+
+    bgPort.onDisconnect.addListener(() => {
+        if (chrome.runtime.lastError) {
+            outputTerminal.value += "> " + cleanMessage (chrome.runtime.lastError.message) + "\n";
+            statusTerminal.textContent = `Status: Error`;
+            fetch(chrome.runtime.getURL("host.log"))
+                .then(res => res.text())
+                .then(text => {
+                    const lines = text.trim().split("\n");
+                    const lastRecord = lines.at(-1);
+                    if (lastRecord.toLowerCase().includes('node') || lastRecord.includes('fichier de commandes.') || lastRecord.includes('batch file.')) {
+                        outputTerminal.value += "> Check if Node.js is installed and well recognized or used on your laptop.\n";
+                    }
+                });
+        } else {
+            statusTerminal.textContent = `Status: Idle`;
+        }
+        scanBtn.disabled = false;
+    });
+
+    bgPort.postMessage({
+        command: "handcheck"
+    });
+}
+
+if (typeof closeBtn !== "undefined") {
+    closeBtn.addEventListener("click", () => {window.close()});
+    scanBtn.addEventListener("click", () => {runScraper()});
+}
+
+if (typeof module !== "undefined") {
+    module.exports = {
+        cleanMessage,
+        showProgress,
+        hideProgress,
+        runScraper
+    };
+}
