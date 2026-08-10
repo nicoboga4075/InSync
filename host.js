@@ -84,18 +84,24 @@ function saveResponseToFile(res, filePath) {
 
 function extractZipEntry(entry, toolPath) {
     if (entry.path.endsWith(path.basename(toolPath))) {
-        entry.pipe(fs.createWriteStream(toolPath));
-    } else {
-        entry.autodrain();
+        return new Promise((resolve, reject) => {
+            const out = fs.createWriteStream(toolPath);
+            entry.pipe(out);
+            out.on("finish", resolve);
+            out.on("error", reject);
+        });
     }
+    entry.autodrain();
+    return Promise.resolve();
 }
 
 function extractFromZip(zipPath, toolPath) {
     return new Promise((resolve, reject) => {
+        const pendingWrites = [];
         fs.createReadStream(zipPath)
             .pipe(unzipper.Parse())
-            .on("entry", entry => extractZipEntry(entry, toolPath))
-            .on("close", resolve)
+            .on("entry", entry => pendingWrites.push(extractZipEntry(entry, toolPath)))
+            .on("close", () => Promise.all(pendingWrites).then(resolve, reject))
             .on("error", reject);
     });
 }
