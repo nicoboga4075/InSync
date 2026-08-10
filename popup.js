@@ -48,7 +48,7 @@ bgPort.onDisconnect.addListener(() => {
             .then(res => res.text())
             .then(text => {
                 const lines = text.trim().split("\n");
-                const lastRecord = lines[lines.length - 1];
+                const lastRecord = lines.at(-1);
                 if (lastRecord.toLowerCase().includes('node') || lastRecord.includes('fichier de commandes.') || lastRecord.includes('batch file.')) {
                     outputTerminal.value += "> Check if Node.js is installed and well recognized or used on your laptop.\n";
                 }
@@ -164,7 +164,7 @@ async function runScraper() {
 
                         const getName = () => {
                             const values = [
-                                document.title.match(/^(.*?)\s*\|\s*LinkedIn\s*$/)?.[1]?.trim(),
+                                /^([^|]*)\|\s*LinkedIn\s*$/.exec(document.title)?.[1]?.trim(),
                                 getToolBar()?.querySelector('a')?.firstElementChild?.ariaLabel?.trim(),
                                 getToolBar()?.querySelectorAll('p')?.[0]?.textContent?.trim(),
                                 getTopCard()?.querySelector('h2')?.textContent?.trim()
@@ -190,7 +190,7 @@ async function runScraper() {
 								}
 
 								if (idleRounds < maxIdleRounds) {
-									sendProgress("", parseInt(idleRounds*100/maxIdleRounds));
+									sendProgress("", Number.parseInt(idleRounds*100/maxIdleRounds));
 									setTimeout(step, checkInterval);
 								} else {
 									resolve({
@@ -211,7 +211,7 @@ async function runScraper() {
                     }
                 });
             }
-        }, ([{ result: result }]) => {
+        }, ([{ result }]) => {
             scanBtn.disabled = false;
             if (chrome.runtime.lastError) {
                 analysisHadError = true;

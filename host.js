@@ -1,7 +1,7 @@
 const https = require("node:https");
 const fs = require("node:fs");
 const path = require("node:path");
-const logFile = "C:\\InSync\\host.log";
+const logFile = String.raw`C:\InSync\host.log`;
 const tools = {};
 
 function log(msg) {
@@ -19,6 +19,7 @@ function log(msg) {
             encoding: 'utf8'
         });
     } catch (err) {
+        console.error("Log write failed: " + err.message);
         return false;
     }
 }

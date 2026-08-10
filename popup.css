@@ -83,7 +83,7 @@ body {
 }
 
 .wbtn:hover {
-	background: rgba(255, 255, 255, 0.1);
+	background: var(--border);
 	color: white;
 }
 
@@ -174,7 +174,7 @@ button.action-btn::before {
 }
 
 button.action-btn:hover {
-	background: rgba(45, 156, 219, 0.1);
+	background: var(--border);
 	border-color: var(--accent);
 	color: white;
 }
