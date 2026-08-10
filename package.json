@@ -10,7 +10,7 @@
     "dotenv": "^17.4.2"
   },
   "devDependencies": {
-    "terser": "^5.39.0",
+    "terser": "^5.49.2",
     "auto-changelog": "^2.6.0"
   },
   "auto-changelog": {
