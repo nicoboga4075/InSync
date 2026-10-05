@@ -177,7 +177,7 @@ function installIfNotExists(toolName, callback) {
         });
         return callback();
     }
-    download(toolName, (err) => {
+    const onDone = (err) => {
         if (err) {
             const errorMessage = cleanMessage(err.message);
             sendResponse({
@@ -186,7 +186,8 @@ function installIfNotExists(toolName, callback) {
             log(`Installation failed for ${toolName}: ${errorMessage}`);
         }
         callback();
-    });
+    };
+    download(toolName, onDone).catch(onDone);
 }
 
 function installAllTools() {
@@ -240,33 +241,40 @@ function formatBytes(bytes) {
 }
 
 let buffer = Buffer.alloc(0);
-async function handleStdinData(chunk) {
+// Messages are processed one at a time, in arrival order, even across chunks.
+let messageQueue = Promise.resolve();
+
+async function handleMessage(msgText) {
+    try {
+        const msg = JSON.parse(msgText);
+        log("Message: " + JSON.stringify(msg));
+        if (msg.command === "install") {
+            await installAllTools();
+            sendResponse({
+                type: "NATIVE_DISCONNECT",
+                error: null
+            });
+            return;
+        }
+        log("Unknown command received");
+        sendResponse({
+            message: "Unknown command"
+        });
+    } catch (err) {
+        log("JSON parse error: " + cleanMessage(err.message));
+    }
+}
+
+function handleStdinData(chunk) {
     buffer = Buffer.concat([buffer, chunk]);
     while (buffer.length >= 4) {
         const msgLength = buffer.readUInt32LE(0);
         if (buffer.length < 4 + msgLength) break;
-        const msgBuffer = buffer.slice(4, 4 + msgLength);
-        const msgText = msgBuffer.toString("utf8");
+        const msgText = buffer.slice(4, 4 + msgLength).toString("utf8");
         buffer = buffer.slice(4 + msgLength);
-        try {
-            const msg = JSON.parse(msgText);
-            log("Message: " + JSON.stringify(msg));
-            if (msg.command === "install") {
-                await installAllTools();
-                sendResponse({
-                    type: "NATIVE_DISCONNECT",
-                    error: null
-                });
-                continue;
-            }
-            log("Unknown command received");
-            sendResponse({
-                message: "Unknown command"
-            });
-        } catch (err) {
-            log("JSON parse error: " + cleanMessage(err.message));
-        }
+        messageQueue = messageQueue.then(() => handleMessage(msgText));
     }
+    return messageQueue;
 }
 
 // Only wire up real stdio when run directly as the native messaging host,

@@ -230,6 +230,9 @@ if (typeof chrome !== "undefined" && chrome.runtime) {
                     if (lastRecord.toLowerCase().includes('node') || lastRecord.includes('fichier de commandes.') || lastRecord.includes('batch file.')) {
                         outputTerminal.value += "> Check if Node.js is installed and well recognized or used on your laptop.\n";
                     }
+                })
+                .catch(() => {
+                    // host.log is optional diagnostics; ignore if unreadable.
                 });
         } else {
             statusTerminal.textContent = `Status: Idle`;
@@ -244,7 +247,7 @@ if (typeof chrome !== "undefined" && chrome.runtime) {
 
 if (typeof closeBtn !== "undefined") {
     closeBtn.addEventListener("click", () => {window.close()});
-    scanBtn.addEventListener("click", () => {runScraper()});
+    scanBtn.addEventListener("click", () => {void runScraper()});
 }
 
 if (typeof module !== "undefined") {
