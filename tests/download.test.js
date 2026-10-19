@@ -4,8 +4,8 @@ const https = require("node:https");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
-const { createStoredZip } = require("../test-helpers/zip.js");
-const { createTlsFixture } = require("../test-helpers/tls-fixture.js");
+const { createStoredZip } = require("./helpers/zip.js");
+const { createTlsFixture } = require("./helpers/tls-fixture.js");
 
 // host.js only wires up its stdin listener when run as the main module
 // (require.main === module), so requiring it here is safe: it won't try
