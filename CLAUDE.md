@@ -10,7 +10,7 @@ CI runs on GitHub Actions, with Codecov for coverage and SonarCloud for quality.
 
 | Area | Tools (major version) |
 |---|---|
-| Runtime | Node.js 22 (installed by `host.cmd` when missing; CI matrix 20.x, 22.x, 24.x), npm |
+| Runtime | Node.js 22.23.3 (`.nvmrc`, read by the coverage job; CI build matrix `lts/iron` (20), `lts/jod` (22) and `lts/krypton` (24); `host.cmd` installs the same version when missing), npm |
 | Extension | Chrome Manifest V3, Vanilla JS (CommonJS), HTML 5, CSS 3, Terser 5 |
 | Host | Node.js built-ins (`https`, `child_process`, `fs`), unzipper 0 |
 | Tests | `node:test` runner, `node:assert/strict`, c8 12 |
@@ -31,10 +31,12 @@ No linter is configured.
 
 ## Environment and setup
 
+- Node.js of `.nvmrc` (22.23.3; 20 or later works), then `npm ci`.
+- Always use an LTS version of Node.js for the builds and the tests (`.nvmrc`, the GitHub workflows, `host.cmd`), never a Current (odd) release; Node 20, past its end of life, stays in the CI build matrix as `lts/iron` (its last LTS release, 20.20.2) for backward compatibility only.
 - Windows only: `host.cmd` and `com.insync.linkedin.json` hard-code `C:\InSync`.
-- `npm install`, then `npm run build`; load the folder unpacked from `chrome://extensions` (Developer mode).
+- `npm run build`, then load the folder unpacked from `chrome://extensions` (Developer mode).
 - Native host registration: the registry key `HKCU\Software\Google\Chrome\NativeMessagingHosts\com.insync.linkedin` points to `com.insync.linkedin.json`, whose `allowed_origins` must match the loaded extension ID.
-- `host.cmd` resolves Node (PATH → nvm in `%LOCALAPPDATA%\nvm` → portable Node 22.22.0 download into `%LOCALAPPDATA%\Programs\nodejs`); `host.js` runs `npm install` on start if `node_modules/` is missing.
+- `host.cmd` resolves Node (PATH → nvm in `%LOCALAPPDATA%\nvm` → portable Node 22.23.3 download into `%LOCALAPPDATA%\Programs\nodejs`); `host.js` runs `npm install` on start if `node_modules/` is missing.
 - Logs: `host.log` (written by `host.js`), `stdio.log` (stderr and Node version, written by `host.cmd`).
 
 ## Architecture
@@ -57,7 +59,7 @@ Message flow: `popup.js` ⇄ (`chrome.runtime.connect`, port `"popup"`) ⇄ `bac
 
 - One branch, `main`. Commit only when asked, and never push until asked.
 - `origin` is GitHub (`nicoboga4075/InSync`); Dependabot opens daily npm update PRs.
-- Each push and PR to `main` runs `.github/workflows/node.js.yml`: `npm ci --ignore-scripts`, build and tests on Node 20/22/24; on 22.x coverage goes to the job summary and to Codecov. SonarCloud uses automatic analysis (`.sonarcloud.properties`, excludes `dist/` and `tests/`).
+- Each push and PR to `main` runs `.github/workflows/node.js.yml`: the `build` job runs `npm ci --ignore-scripts`, build and tests on `lts/iron`, `lts/jod` and `lts/krypton`; then the `coverage` job, on the Node.js of `.nvmrc`, writes the coverage to the job summary and uploads it to Codecov (OIDC). SonarCloud uses automatic analysis (`.sonarcloud.properties`, excludes `dist/` and `tests/`).
 - Releases: `npm run release` (see "Commands").
 
 ## Tests
